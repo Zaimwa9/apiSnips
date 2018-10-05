@@ -1,0 +1,22 @@
+{
+  "name": "apiSnips",
+  "version": "0.0.0",
+  "description": "",
+  "main": "action-apiSnips.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zaimwa9/apiSnips.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Zaimwa9/apiSnips/issues"
+  },
+  "homepage": "https://github.com/Zaimwa9/apiSnips#readme",
+  "dependencies": {
+    "mqtt": "^2.18.8"
+  }
+}
