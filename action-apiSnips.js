@@ -137,6 +137,33 @@ client.on('message', function(topic, message) {
 		client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
 	}
 
+	if (topic == 'hermes/intent/wzaim:getId') {
+		initDb(db, payload);
+		var data = fs.readFileSync(db);
+		var name = payload.slots.length > 0 ? payload.slots[0].value.value : "";
+		var id = -1;
+		data = JSON.parse(data);
+		products = data.website.products;
+		for (var i = 0; i < products.length; i++) {
+			if (products[i].name == name) {
+				var id = products[i].id;
+			}
+		}
+		if (id > 0) {
+			var resp = {
+				'sessionId': payload.sessionId,
+				'text': `L'identifiant du produit ${name} est ${id}.`
+			}
+			client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
+		} else {
+			var resp = {
+				'sessionId': payload.sessionId,
+				'text': `Ce produit n'existe pas dans la base de donnees`
+			}
+			client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
+		}
+	}
+
 	if (topic == 'hermes/intent/wzaim:addProduct') {
 		initDb(db, payload);
 		var answers = ["Comment veux tu l'appeler ?", "Quel est le nom du nouveau produit ?", "Quel titre veux tu lui donner ?", "Comment dois-je appeler ce produit ?", "quel est son titre ?"];
@@ -152,8 +179,8 @@ client.on('message', function(topic, message) {
 			newProduct['id'] = 1;
 			var products = [newProduct];
 		} else {
-			newProduct['id'] = Math.floor(products.length * (Math.random * 5));
 			var products = data.website.products;
+			newProduct['id'] = Math.floor(products.length * (Math.random() * 5));
 			products.push(newProduct);
 		}
 		data = {...data, website: {...data.website, products: products}}
@@ -161,7 +188,7 @@ client.on('message', function(topic, message) {
 		var resp = {
 			'sessionId': payload.sessionId,
 			'text': answers[Math.floor(Math.random() * answers.length)],
-			'intentFilters': ['wzaim:addTitle']
+			'intentFilters': ['wzaim:addTitle', 'wzaim:cancel']
 		};
 		client.publish('hermes/dialogueManager/continueSession', JSON.stringify(resp));
 	}
@@ -174,6 +201,12 @@ client.on('message', function(topic, message) {
 		var newName = (payload.slots.length > 0) ? payload.slots[0].rawValue : "";
 		if (products[products.length - 1].name.length == 0) {
 			if (payload.slots.length > 0) {
+				for (var i = 0; i < products.length; i++) {
+					if (products[i].name == newName) {
+						products[products.length - 1].id = products[i].id;
+						products.splice(i, 1);
+					}
+				}	
 				products[products.length - 1].name = newName;
 			}
 			products = products.filter(product => product.name.length > 0);
@@ -211,10 +244,10 @@ client.on('message', function(topic, message) {
 			fs.writeFileSync(db, JSON.stringify(data));
 			var resp = {
 				'sessionId': payload.sessionId,
-				'text': `Le prix de: ${products[products.length - 1].name} est maintenant de ${newPrice} euros`,
-				'intentFilters': ['wzaim:addStocks', 'wzaim:cancel']
+				'text': `Le prix de: ${products[products.length - 1].name} est maintenant de ${newPrice} euros, combien en as tu a vendre ?`,
+				'intentFilters': ['wzaim:addStock', 'wzaim:cancel']
 			}
-			client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
+			client.publish('hermes/dialogueManager/continueSession', JSON.stringify(resp));
 		} else {
 			var resp = {
 				'sessionId': payload.sessionId,
@@ -229,9 +262,9 @@ client.on('message', function(topic, message) {
 		var data = fs.readFileSync(db);
 		data = JSON.parse(data);
 		var products = data.website.products;
-		var newStock = payload.slots.length > 0 ? payload.slots[0].value.value : "";
+		var newStock = payload.slots.length > 0 ? parseInt(payload.slots[0].value.value) : "";
 
-		if (products[product.length - 1].name.length > 0 && products[products.length - 1].price.length > 0 && products[products.length - 1].stock.length == 0) {
+		if (products[products.length - 1].name.length > 0 && products[products.length - 1].price > 0 && products[products.length - 1].stock.length == 0) {
 			if (payload.slots.length > 0) {
 				products[products.length - 1].stock = newStock;
 			}
@@ -243,11 +276,13 @@ client.on('message', function(topic, message) {
 				'sessionId': payload.sessionId,
 				'text': `Le produit ${products[products.length - 1].name} a ete ajoute avec succes au prix de ${products[products.length - 1].price} avec un stock de ${newStock}.`
 			}
+			client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
 		} else {
 			var resp = {
 				'sessionId': payload.sessionId,
 				'text': "Aucun produit en cours de creation, merci d'en creer un avant de vouloir ajouter son stock"
 			}
+			client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
 		}
 	}
 
@@ -256,12 +291,12 @@ client.on('message', function(topic, message) {
 		var data = fs.readFileSync(db);
 		data = JSON.parse(data);
 		var products = data.website.products;
-		products = products.filter(product => product.name.length > 0 && product.price > 0 && product.stock >= 0);
+		products = products.filter(product => product.name.length > 0 && product.price > 0 && product.stock.length != 0);
 		data = {...data, website: {...data.website, products: products}};
 		fs.writeFileSync(db, JSON.stringify(data));
 		var resp = {
 			'sessionId': payload.sessionId,
-			'text': `Creation de produit annulee et base de donnees nettoyee.`
+			'text': `Base de donnees nettoyee.`
 		}
 		client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
 	}
