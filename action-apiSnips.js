@@ -5,6 +5,12 @@ const db = '/home/pi/apiRasp/data.json';
 
 var client = mqtt.connect('mqtt://' + HOST, {port: 1883});
 
+const sensEng = {
+	'temperature': 'temperature',
+	'pression': 'pressure',
+	'humidite': 'humidity'
+}
+
 function initDb(db, payload) {
 	if (!fs.existsSync(db)) {
 		console.log('No file, creating...');
@@ -79,6 +85,58 @@ client.on('message', function(topic, message) {
 		client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
 	}
 
+	if (topic == 'hermes/intent/wzaim:displaySensors') {
+		initDb(db, payload);
+		var nbSlots = payload.slots.length;
+		var sensors = [];
+		var answer = "";
+		var data = fs.readFileSync(db);
+		data = JSON.parse(data);
+
+		for (var i = 0; i < nbSlots; i++) {
+			sensors[i] = sensEng[payload.slots[i].value.value];
+			answer += `${sensors[i]}, `;
+			for (j = 0; j < data.website.sockets.length; j++) {
+				if (sensors[i] == data.website.sockets[j].name) {
+					data.website.sockets[j].active = true;
+				}
+			}
+		}
+		data = {...data, website: {...data.website, sockets: data.website.sockets}};
+		fs.writeFileSync(db, JSON.stringify(data));
+		var resp = {
+			'sessionId': payload.sessionId,
+			'text': `J'ai activé les capteurs ${answer}`
+		}
+		client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
+	}
+
+	if (topic == 'hermes/intent/wzaim:hideSensors') {
+		initDb(db, payload);
+		var nbSlots = payload.slots.length;
+		var sensors = [];
+		var answer = "";
+		var data = fs.readFileSync(db);
+		data = JSON.parse(data);
+		
+		for (var i = 0; i < nbSlots; i++) {
+			sensors[i] = sensEng[payload.slots[i].value.value];
+			answer += `${sensors[i]}, `;
+			for (j = 0; j < data.website.sockets.length; j++) {
+				if (sensors[i] == data.website.sockets[j].name) {
+					data.website.sockets[j].active = false;
+				}
+			}
+		}
+		data = {...data, website: {...data.website, sockets: data.website.sockets}};
+		fs.writeFileSync(db, JSON.stringify(data));
+		var resp = {
+			'sessionId': payload.sessionId,
+			'text': `J'ai desactive les capteurs ${answer}`
+		}
+		client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
+	}
+
 	if (topic == 'hermes/intent/wzaim:addProduct') {
 		initDb(db, payload);
 		var answers = ["Comment veux tu l'appeler ?", "Quel est le nom du nouveau produit ?", "Quel titre veux tu lui donner ?", "Comment dois-je appeler ce produit ?", "quel est son titre ?"];
@@ -87,6 +145,7 @@ client.on('message', function(topic, message) {
 			"price": "",
 			"stock": ""
 		}
+
 		var data = fs.readFileSync(db);
 		data = JSON.parse(data);
 		if (!('products' in data.website)) {
