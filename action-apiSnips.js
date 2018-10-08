@@ -11,11 +11,15 @@ const sensEng = {
 	'humidite': 'humidity'
 }
 
-function initDb(db, payload) {
-	if (!fs.existsSync(db)) {
+function initDb(db, payload, destroy) {
+	if (!fs.existsSync(db) || destroy == true) {
 		console.log('No file, creating...');
 		var content = {
 			"website": {
+				"header": {
+					"title": "Welcome to MusicLand",
+					"color": "grey"
+				},
 				"sockets": [
 					{
 						"name": "temperature",
@@ -23,11 +27,11 @@ function initDb(db, payload) {
 					},
 					{
 						"name": "humidity",
-						"active": true
+						"active": false
 					},
 					{
 						"name": "pressure",
-						"active": true
+						"active": false
 					}
 				],
 				"products": [
@@ -35,7 +39,7 @@ function initDb(db, payload) {
 			}
 		}
 		try {
-			fs.writeFileSync(db, content);
+			fs.writeFileSync(db, JSON.stringify(content));
 		} catch (e) {
 			throw (e);
 			console.log(e);
@@ -83,7 +87,7 @@ client.on('message', function(topic, message) {
 			'text': `Actuellement ton site se compose de ${status.header} section titre, ${status.products} produits et ${status.sensors} capteurs actifs.`
 		}
 		client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
-	}
+	}	
 
 	if (topic == 'hermes/intent/wzaim:displaySensors') {
 		initDb(db, payload);
@@ -152,7 +156,7 @@ client.on('message', function(topic, message) {
 		if (id > 0) {
 			var resp = {
 				'sessionId': payload.sessionId,
-				'text': `L'identifiant du produit ${name} est ${id}.`
+				'text': `L'identifiant du produit ${name} est: ${id}.`
 			}
 			client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
 		} else {
@@ -162,6 +166,22 @@ client.on('message', function(topic, message) {
 			}
 			client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
 		}
+	}
+
+	if (topic == 'hermes/intent/wzaim:deleteById') {
+		initDb(db, payload);
+		var data = fs.readFileSync(db);
+		var idRemove = payload.slots.length > 0 ? parseInt(payload.slots[0].value.value): "";
+		data = JSON.parse(data);
+		products = data.website.products;
+		products = products.filter(product => product.id != idRemove);
+		data = {...data, website: {...data.website, products: products}};
+		fs.writeFileSync(db, JSON.stringify(data));
+		var resp = {
+			'sessionId': payload.sessionId,
+			'text': `Le produit dont l'identifiant est ${idRemove} a ete supprime`
+		};
+		client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
 	}
 
 	if (topic == 'hermes/intent/wzaim:addProduct') {
@@ -180,7 +200,7 @@ client.on('message', function(topic, message) {
 			var products = [newProduct];
 		} else {
 			var products = data.website.products;
-			newProduct['id'] = Math.floor(products.length * (Math.random() * 5));
+			newProduct['id'] = Math.floor(products.length * (Math.random() * 10));
 			products.push(newProduct);
 		}
 		data = {...data, website: {...data.website, products: products}}
@@ -297,6 +317,18 @@ client.on('message', function(topic, message) {
 		var resp = {
 			'sessionId': payload.sessionId,
 			'text': `Base de donnees nettoyee.`
+		}
+		client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
+	}
+
+	if (topic == 'hermes/intent/wzaim:destroy') {
+		initDb(db, payload, true);
+		var data = fs.readFileSync(db);
+		data = JSON.parse(data);
+		console.log(data);
+		var resp = {
+			'sessionId': payload.sessionId,
+			'text': 'La base de donnee a ete correctement remise a zero.'
 		}
 		client.publish('hermes/dialogueManager/endSession', JSON.stringify(resp));
 	}
