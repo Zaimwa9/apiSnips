@@ -3,7 +3,7 @@
 const fs = require('fs');
 const mqtt = require('mqtt');
 const HOST = 'localhost';
-const db = './data.json';
+const db = '/var/lib/snips/skills/data.json';
 
 var client = mqtt.connect('mqtt://' + HOST, {port: 1883});
 

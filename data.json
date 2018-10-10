@@ -1,1 +1,0 @@
-{"website":{"header":{"title":"Welcome to this website","color":"grey"},"sockets":[{"name":"temperature","active":false},{"name":"humidity","active":false},{"name":"pressure","active":false}],"products":[{"name":"harmonica","price":10000,"stock":52,"id":0}]}}
