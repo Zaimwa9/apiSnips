@@ -27,3 +27,6 @@ Check this basic front made for the app (https://github.com/Zaimwa9/frontRasp/)
 Everything happens on [Snips](https://snips.ai/). Link an app to this repo and you are all set up.
 
 To fully benefit from the data, you can plug a front (e.g https://github.com/Zaimwa9/frontRasp/)
+
+If the port is busy you can change it in `/var/lib/snips/skills/yourAction/config.ini`
+and restart `sudo systemctl restart 'snips-*'`
