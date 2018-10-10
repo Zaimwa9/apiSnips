@@ -21,7 +21,8 @@ app.use(express.static('public'));
 
 // Serving data.json on client landpage
 app.get('/', function (req, res) {
-	var content = fs.readFileSync('/var/lib/snips/skills/data.json');
+	var dataPath = '/var/lib/snips/skills/data.json';
+	var content = (fs.existsSync(dataPath)) ? fs.readFileSync('/var/lib/snips/skills/data.json') : {};
 	res.send(content);
 })
 
