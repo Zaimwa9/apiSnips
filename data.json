@@ -1,0 +1,1 @@
+{"website":{"header":{"title":"saluto","color":"red"},"sockets":[{"name":"temperature","active":true},{"name":"humidity","active":true},{"name":"pressure","active":true}],"products":[{"name":"piano","price":2000,"stock":10,"id":2},{"name":"flamenco","price":25,"stock":18,"id":3},{"name":"harmonica","price":250,"stock":35,"id":0}]}}

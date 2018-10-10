@@ -1,7 +1,9 @@
+#!/usr/bin/env node
+
 const fs = require('fs');
 const mqtt = require('mqtt');
 const HOST = 'localhost';
-const db = '/home/pi/apiRasp/data.json';
+const db = './apiRasp/data.json';
 
 var client = mqtt.connect('mqtt://' + HOST, {port: 1883});
 
@@ -9,6 +11,16 @@ const sensEng = {
 	'temperature': 'temperature',
 	'pression': 'pressure',
 	'humidite': 'humidity'
+}
+
+function setId(products) {
+	var max = 0;
+	for (var i = 0; i < products.length; i++) {
+		if (products[i].id > max) {
+			max = products[id] + 1;
+		}
+	}
+	return max;
 }
 
 function initDb(db, payload, destroy) {
@@ -200,7 +212,7 @@ client.on('message', function(topic, message) {
 			var products = [newProduct];
 		} else {
 			var products = data.website.products;
-			newProduct['id'] = Math.floor(products.length * (Math.random() * 10));
+			newProduct['id'] = setId(products);
 			products.push(newProduct);
 		}
 		data = {...data, website: {...data.website, products: products}}
