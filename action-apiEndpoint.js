@@ -7,6 +7,11 @@ const io = require('socket.io')(Server);
 const imu = require('node-sense-hat').Imu;
 const fs = require('fs');
 const cors = require('cors');
+const ini = require('ini');
+
+const config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'));
+
+const port = config.secret.port.length > 0 ? parseInt(config.secret.port.length) : 3000;
 
 const IMU = new imu.IMU();
 
@@ -36,6 +41,6 @@ function fetchData(socket) {
 	})
 }
 
-Server.listen(3000, function () {
+Server.listen(port, function () {
 	console.log('Up and running');
 })
