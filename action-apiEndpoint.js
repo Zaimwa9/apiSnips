@@ -21,7 +21,7 @@ app.use(express.static('public'));
 
 // Serving data.json on client landpage
 app.get('/', function (req, res) {
-	var content = fs.readFileSync('./apiRasp/data.json');
+	var content = fs.readFileSync('./data.json');
 	res.send(content);
 })
 

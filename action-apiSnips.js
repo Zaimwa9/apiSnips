@@ -3,7 +3,7 @@
 const fs = require('fs');
 const mqtt = require('mqtt');
 const HOST = 'localhost';
-const db = './apiRasp/data.json';
+const db = './data.json';
 
 var client = mqtt.connect('mqtt://' + HOST, {port: 1883});
 
