@@ -11,10 +11,7 @@ const ini = require('ini');
 
 const config = ini.parse(fs.readFileSync('./config.ini', 'utf-8'));
 
-console.log(config);
-
 const port = config.secret.port.length > 0 ? parseInt(config.secret.port) : 3000;
-console.log(port);
 const IMU = new imu.IMU();
 
 // Enabling cors
